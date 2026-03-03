@@ -1,0 +1,2337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track4World: Future of Motion Reconstruction</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- MathJax -->
+    <script>
+        MathJax = {
+          tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: rgba(26, 29, 35, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #00f2fe;
+            --accent-secondary: #4facfe;
+            --accent-purple: #8b5cf6;
+            --text-main: #ffffff;
+            --text-muted: #a5b3ce;
+            --border-radius: 16px;
+            --section-spacing: 80px;
+            --glow-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+        }
+
+        /* --- Global Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e1116; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary); 
+        }
+
+        /* --- Dynamic Background --- */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+            overflow-x: hidden;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-glow::before, .bg-glow::after {
+            content: '';
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: moveOrb 25s infinite alternate ease-in-out;
+        }
+
+        .bg-glow::before {
+            background: radial-gradient(circle, var(--accent-primary), transparent 70%);
+            top: -20%; left: -20%;
+        }
+
+        .bg-glow::after {
+            background: radial-gradient(circle, var(--accent-purple), transparent 70%);
+            bottom: -20%; right: -20%;
+            animation-delay: -5s;
+            animation-duration: 35s;
+        }
+
+        @keyframes moveOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(20%, 20%) scale(1.2); }
+        }
+
+        /* --- Typography & Core Components --- */
+        h1, h2, h3 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            display: inline-block;
+            background: linear-gradient(90deg, var(--text-main), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), transparent);
+            border-radius: 2px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- Glassmorphism Cards --- */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+            box-shadow: 0 12px 40px rgba(0, 242, 254, 0.1);
+        }
+
+        /* --- Header Section --- */
+        .header-container {
+            text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .cool-icon-svg {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 0 10px var(--accent-primary));
+        }
+        
+        .icon-cube {
+            animation: rotateCube 8s linear infinite;
+            transform-origin: center;
+        }
+        .icon-particle {
+            animation: pulseParticle 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes rotateCube {
+            from { transform: rotateX(0deg) rotateY(0deg); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        @keyframes pulseParticle {
+            from { opacity: 0.3; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.2); }
+        }
+
+        .title-glitch {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 0; 
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-primary) 50%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.3);
+            position: relative;
+            display: inline-block;
+        }
+
+        .subtitle {
+            font-size: 1.6rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        /* --- Authors & Buttons --- */
+        .authors {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .authors a {
+            color: var(--text-main);
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .authors a:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(0, 242, 254, 0.05);
+            box-shadow: var(--glow-shadow);
+        }
+        
+        .author-marker {
+            color: var(--accent-secondary);
+            font-size: 0.8em;
+            vertical-align: super;
+        }
+
+        .affiliations {
+            color: var(--text-muted);
+            margin-top: 20px;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 50px;
+        }
+
+        .btn {
+            position: relative;
+            padding: 12px 32px;
+            border-radius: 4px;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            background: rgba(0, 242, 254, 0.05);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 0%; height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            z-index: -1;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            opacity: 0;
+        }
+
+        .btn:hover {
+            color: #000;
+            border-color: transparent;
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .btn:hover::before {
+            width: 100%;
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- Main Content Layout --- */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 100px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--section-spacing);
+        }
+
+        /* --- Abstract Highlights --- */
+        .abstract-content {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .highlight-term {
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .highlight-term::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 0;
+            height: 2px;
+            background: var(--accent-primary);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .highlight-term:hover::after {
+            width: 100%;
+        }
+
+        .highlight-badge {
+            background: rgba(0, 242, 254, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: var(--accent-primary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+            display: inline-block;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background: rgba(0, 242, 254, 0.05);
+            border-color: var(--accent-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--accent-secondary);
+        }
+
+        .feature-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .feature-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Tracking Section Styles --- */
+        .tracking-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tracking-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- Tracking & Viser Button Styles --- */
+        .track-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 更干脆的过渡 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            user-select: none; /* 防止点击时选中文本 */
+        }
+
+        /* 悬停效果 */
+        .track-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 点击按压效果 (新增) */
+        .track-btn:active {
+            transform: translateY(0) scale(0.96);
+        }
+
+        /* --- 默认激活状态 (青色 - 用于 2D/3D Tracking 和 Camera-Centric) --- */
+        .track-btn.active {
+            background: rgba(0, 242, 254, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+            font-weight: 700;
+        }
+
+        .tracking-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            display: grid;
+            place-items: center;
+        }
+
+        .tracking-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+            position: absolute;
+            top: 0; left: 0;
+        }
+
+        .tracking-video.loaded {
+            opacity: 1;
+        }
+
+        .video-overlay-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-secondary);
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            transform: translateY(10px);
+            opacity: 0;
+            transition: all 0.5s ease 0.2s;
+            z-index: 10;
+        }
+
+        .tracking-viewport:hover .video-overlay-info,
+        .tracking-video.loaded ~ .video-overlay-info {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .video-loader {
+            position: absolute;
+            z-index: 1;
+            color: var(--accent-primary);
+            font-size: 2rem;
+            transition: opacity 0.3s ease;
+        }
+        .video-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* --- VISER DEMO SPECIFIC STYLES --- */
+        .viser-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #22c55e;
+            white-space: nowrap;
+        }
+
+        .live-indicator i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .viser-controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .viser-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .viser-scene-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-width: 790px;
+            max-height: 80px; /* Limit height for many buttons */
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .viser-scene-group1 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-width: 790px;
+            max-height: 80px; /* Limit height for many buttons */
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .viser-mode-group {
+            display: flex;
+            gap: 20px;
+        }
+        
+        /* --- World-Centric 专属激活状态 (紫色) --- */
+        #viser-world-demo .track-btn.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.35);
+        }
+        
+        /* 悬停微调 */
+        #viser-world-demo .track-btn:hover:not(.active) {
+            border-color: rgba(139, 92, 246, 0.3);
+            color: #fff;
+        }
+        .viser-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        /* --- Mode Buttons (Points/Lines) --- */
+        .mode-btn {
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .mode-btn:active {
+            transform: scale(0.96);
+        }
+
+        .mode-btn.active {
+            background: var(--accent-primary);
+            color: #000; /* 黑色文字对比度更高 */
+            border-color: var(--accent-primary);
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+
+        .viser-wrapper {
+            position: relative;
+            width: 100%;
+            height: 650px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 2px solid transparent;
+            background-image: linear-gradient(var(--bg-color), var(--bg-color)), 
+                              linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.15);
+        }
+
+        .viser-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 242, 254, 0.05) 51%, transparent 51%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        iframe.viser-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            filter: brightness(0.9) contrast(1.1);
+        }
+
+        /* Overlay Video Styling */
+        .overlay-video-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 280px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 20;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+            cursor: pointer;
+        }
+
+        .overlay-video-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .overlay-video-container:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-primary);
+            box-shadow: 0 15px 40px rgba(0, 242, 254, 0.2);
+        }
+
+        .overlay-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .overlay-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 15px 10px 5px;
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+        }
+
+        /* Play/Pause Icon for Overlay */
+        .video-status-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .overlay-video-container.paused .video-status-icon {
+            opacity: 1;
+        }
+
+        .viser-fallback {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--accent-primary);
+            z-index: -1;
+            text-align: center;
+        }
+        
+        .viser-fallback i {
+            filter: drop-shadow(0 0 10px var(--accent-primary));
+        }
+
+        /* --- New Styles for Merged Section --- */
+        .demo-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            margin: 60px 0;
+            position: relative;
+        }
+        
+        .demo-divider::after {
+            content: '◆';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1d23; /* Matches card bg */
+            padding: 0 10px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .subsection-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-left: 15px;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .subsection-header.world-centric {
+            border-left-color: var(--accent-purple);
+        }
+
+        .subsection-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subsection-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        /* =========================================
+           TABLE STYLES
+           ========================================= */
+        .metrics-split-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .table-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-secondary);
+            border-left: 4px solid var(--accent-primary);
+            padding-left: 12px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(10, 12, 16, 0.6);
+            border: 1px solid var(--glass-border);
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .complex-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .complex-table th, .complex-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .complex-table tbody tr:nth-child(even) td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        /* Sticky Headers & Columns */
+        .complex-table thead tr:first-child th {
+            top: 0;
+            z-index: 40;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .complex-table thead tr:nth-child(2) td {
+            position: sticky;
+            top: 45px;
+            z-index: 30;
+            background: #151920; 
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+
+        .complex-table thead th {
+            position: sticky;
+            background: #1a1d23;
+            color: var(--text-main);
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            background: #0e1116 !important;
+            z-index: 20;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left !important;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            min-width: 140px;
+        }
+        
+        .complex-table thead tr:first-child th.sticky-col {
+            z-index: 50;
+            background: #1a1d23;
+        }
+
+        .header-group-2 { 
+            background: rgba(255, 255, 255, 0.03) !important; 
+            font-size: 0.75rem; 
+        }
+
+        .complex-table tbody tr:hover td {
+            background: rgba(0, 242, 254, 0.08) !important;
+            color: #fff;
+        }
+        .complex-table tbody tr:hover .sticky-col {
+            background: #132f35 !important;
+            color: var(--accent-primary);
+        }
+
+        .row-ours td {
+            background: rgba(0, 242, 254, 0.12) !important;
+            color: #fff !important;
+            font-weight: bold;
+            border-top: 1px solid var(--accent-primary);
+            border-bottom: 1px solid var(--accent-primary);
+        }
+        .row-ours .sticky-col {
+            background: #0a2a30 !important; 
+            color: var(--accent-primary) !important;
+            border-right: 1px solid var(--accent-primary);
+        }
+
+        .best-val {
+            font-weight: 800;
+            text-decoration: underline;
+            text-decoration-color: var(--accent-primary);
+            text-underline-offset: 3px;
+            color: #fff;
+        }
+
+        /* --- BibTeX --- */
+        .bibtex-container {
+            position: relative;
+            background: #090c10;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            border: 1px solid #30363d;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .bibtex-header {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--accent-primary);
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .bibtex {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #7ee787;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 0;
+        }
+        
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            .title-wrapper { flex-direction: column; gap: 10px; }
+            .cool-icon-svg { width: 60px; height: 60px; }
+            h1.title-glitch { font-size: 3rem; }
+            .subtitle { font-size: 1.2rem; }
+            .button-group { flex-direction: column; align-items: center; gap: 15px; }
+            .btn { width: 80%; justify-content: center; }
+            .glass-card { padding: 25px; }
+            .viser-wrapper { height: 450px; }
+            .tracking-controls { flex-direction: row; overflow-x: auto; padding-bottom: 10px; justify-content: flex-start; }
+            .track-btn { white-space: nowrap; }
+            
+            /* Viser Specific Mobile */
+            .viser-controls-row { flex-direction: column; align-items: flex-start; }
+            .overlay-video-container { width: 160px; top: 10px; left: 10px; }
+            .viser-scene-group { max-height: none; overflow-y: visible; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <header class="header-container">
+        <div class="title-wrapper">
+            <svg class="cool-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--accent-primary);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--accent-purple);stop-opacity:1" />
+                    </linearGradient>
+                    <filter id="glow-filter">
+                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                
+                <g class="icon-cube" filter="url(#glow-filter)">
+                    <rect x="30" y="30" width="40" height="40" fill="none" stroke="url(#icon-grad)" stroke-width="2" opacity="0.8"/>
+                    <rect x="30" y="30" width="40" height="40" fill="none" stroke="url(#icon-grad)" stroke-width="2" opacity="0.5" transform="rotate(45 50 50)"/>
+                    <circle cx="50" cy="50" r="5" fill="var(--accent-primary)"/>
+                </g>
+
+                <circle class="icon-particle" cx="20" cy="20" r="2" fill="var(--accent-primary)"/>
+                <circle class="icon-particle" cx="80" cy="80" r="2" fill="var(--accent-secondary)" style="animation-delay: 0.5s;"/>
+                <circle class="icon-particle" cx="20" cy="80" r="3" fill="var(--accent-purple)" style="animation-delay: 1s;"/>
+                <circle class="icon-particle" cx="80" cy="20" r="3" fill="var(--accent-primary)" style="animation-delay: 1.5s;"/>
+            </svg>
+            
+            <h1 class="title-glitch">Track4World</h1>
+        </div>
+        <div class="subtitle">
+            Feedforward World-centric Dense 3D Tracking of All Pixels
+        </div>
+        
+        <div class="authors">
+            <a href="https://scholar.google.com/citations?user=cRpteW4AAAAJ&hl=zh-CN">Jiahao Lu<span class="author-marker">1</span></a>
+            <a href="https://openreview.net/profile?id=~Jiayi_Xu10">Jiayi Xu<span class="author-marker">1</span></a>
+            <a href="https://wbhu.github.io/">Wenbo Hu<span class="author-marker">2&dagger;</span></a>
+            <a href="https://ruijiezhu94.github.io/ruijiezhu/">Ruijie Zhu<span class="author-marker">2</span></a>
+            <a href="https://afterjourney00.github.io/">Chengfeng Zhao<span class="author-marker">1</span></a>
+            <a href="https://saikit.org/index.html">Sai-Kit Yeung<span class="author-marker">1</span></a>
+            <a href="https://scholar.google.com/citations?user=4oXBp9UAAAAJ&hl=en">Ying Shan<span class="author-marker">2</span></a>
+            <a href="https://liuyuan-pal.github.io/">Yuan Liu<span class="author-marker">1&dagger;</span></a>
+        </div>
+        <div class="affiliations">
+            <span class="author-marker">1</span>The Hong Kong University of Science and Technology  //  <span class="author-marker">2</span>Tencent ARC Lab
+        </div>
+
+        <div class="button-group">
+            <a href="#" class="btn"><i class="fas fa-file-pdf"></i> Read Paper</a>
+            <a href="https://github.com/TencentARC/Track4World" class="btn"><i class="fab fa-github"></i> View Code</a>
+            <a href="#interactive-demos" class="btn" style="border-color: var(--accent-purple); color: var(--accent-purple);"><i class="fas fa-vr-cardboard"></i> Launch Demo</a>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <section class="glass-card">
+            <h2>
+                <i class="fas fa-wave-square" style="margin-right: 12px; color: var(--accent-primary); font-size: 0.8em;"></i>
+                Abstract
+            </h2>
+            
+            <div class="abstract-content">
+                <p>
+                    Estimating the <span class="highlight-term">3D trajectory of every pixel</span> from a <span class="highlight-term">monocular video</span> is crucial and promising for a comprehensive understanding of the 3D dynamics of videos. Recent monocular 3D tracking works demonstrate impressive performance, but are limited to either tracking sparse points on the first frame or a slow optimization-based framework for dense tracking. 
+                </p>
+                
+                <p>
+                    In this paper, we propose a feedforward model, called <span class="highlight-badge">Track4World</span>, enabling an efficient holistic 3D tracking of every pixel in the <span class="highlight-term">world-centric coordinate system</span>. Built on the global 3D scene representation encoded by a VGGT-style ViT, Track4World applies a novel 3D correlation scheme to simultaneously estimate the pixel-wise <span class="highlight-term">2D and 3D dense flow</span> between arbitrary frame pairs.
+                </p>
+
+                <p>
+                    The estimated scene flow, along with the reconstructed 3D geometry, enables subsequent efficient 3D tracking of every pixel of this video. Extensive experiments on multiple benchmarks demonstrate that our approach consistently outperforms existing methods in 2D/3D flow estimation and 3D tracking, highlighting its robustness and scalability for real-world 4D reconstruction tasks.
+                </p>
+            </div>
+        
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-forward-fast"></i></div>
+                    <div class="feature-text">
+                        <span class="feature-title">Feedforward Model</span>
+                        <span class="feature-desc">Efficient Holistic Tracking</span>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-globe"></i></div>
+                    <div class="feature-text">
+                        <span class="feature-title">World-Centric</span>
+                        <span class="feature-desc">Global Coordinate System</span>
+                    </div>
+                </div>
+        
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-crosshairs"></i></div>
+                    <div class="feature-text">
+                        <span class="feature-title">Dense Tracking</span>
+                        <span class="feature-desc">Trajectory for Every Pixel</span>
+                    </div>
+                </div>
+        
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-network-wired"></i></div>
+                    <div class="feature-text">
+                        <span class="feature-title">2D-to-3D Correlation</span>
+                        <span class="feature-desc">Simultaneous 2D & 3D Flow</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="glass-card">
+            <h2><i class="fas fa-video" style="margin-right: 12px; color: var(--accent-purple); font-size: 0.8em;"></i>Camera-Centric 3D Tracking</h2>
+            <p>
+                Our method lifts 2D correspondences into 3D space, enabling robust tracking of points relative to the moving camera coordinate system.
+            </p>
+
+            <div class="tracking-container">
+                <div class="tracking-controls">
+                    <button class="track-btn active" onclick="switchVideo(this)" data-src="assets/epef/parkour1.mp4" data-desc="Camera-Centric: Parkour">
+                        <i class="fas fa-running"></i> Parkour
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/skating2.mp4" data-desc="Camera-Centric: Skating">
+                        <i class="fas fa-skating"></i> Skating
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/skating3.mp4" data-desc="Camera-Centric: Skating 1">
+                        <i class="fas fa-skating"></i> Skating 1
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/snowboard.mp4" data-desc="Camera-Centric: Snowboard">
+                        <i class="fas fa-snowflake"></i> Snowboard
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/swing.mp4" data-desc="Camera-Centric: Swing">
+                        <i class="fas fa-child"></i> Swing
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/tennis.mp4" data-desc="Camera-Centric: Tennis">
+                        <i class="fas fa-baseball-ball"></i> Tennis
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/drift-turn.mp4" data-desc="Camera-Centric: Drift Turn">
+                        <i class="fas fa-car-side"></i> Drift Turn
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/drift.mp4" data-desc="Camera-Centric: Drift">
+                        <i class="fas fa-car"></i> Drift
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/epef/sintel1.mp4" data-desc="Camera-Centric: Sintel">
+                        <i class="fas fa-dragon"></i> Sintel
+                    </button>
+                </div>
+
+                <div class="tracking-viewport">
+                    <div class="video-loader"><i class="fas fa-circle-notch fa-spin"></i></div>
+                    <video class="tracking-video" autoplay loop muted playsinline></video>
+                    <div class="video-overlay-info">Select a Camera-Centric sequence...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="glass-card">
+            <h2><i class="fas fa-globe" style="margin-right: 12px; color: var(--accent-purple); font-size: 0.8em;"></i>World-Centric 3D Tracking</h2>
+            <p>
+                By decoupling camera ego-motion, our method effectively establishes consistent and dense point tracking in the globally aligned world coordinate system.
+            </p>
+
+            <div class="tracking-container">
+                <div class="tracking-controls">
+                    <button class="track-btn active" onclick="switchVideo(this)" data-src="assets/world/2.mp4" data-desc="World-Centric: Outdoor Gym">
+                        <i class="fas fa-running"></i> Outdoor Gym
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/world/1.mp4" data-desc="World-Centric: Kicking">
+                        <i class="fas fa-skating"></i> Kicking
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/world/5.mp4" data-desc="World-Centric: Horsejump High">
+                        <i class="fas fa-horse"></i> Horsejump High
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/world/6.mp4" data-desc="World-Centric: Snowboard">
+                        <i class="fas fa-snowflake"></i> Snowboard
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/world/4.mp4" data-desc="World-Centric: Longboard">
+                        <i class="fas fa-child"></i> Longboard
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/world/3.mp4" data-desc="World-Centric: Elephant">
+                        <i class="fas fa-elephant"></i> Elephant
+                    </button>
+                </div>
+
+                <div class="tracking-viewport">
+                    <div class="video-loader"><i class="fas fa-circle-notch fa-spin"></i></div>
+                    <video class="tracking-video" autoplay loop muted playsinline></video>
+                    <div class="video-overlay-info">Select a World-Centric sequence...</div>
+                </div>
+            </div>
+        </section>
+        <!-- 2D Tracking Section -->
+        <section class="glass-card">
+            <h2><i class="fas fa-crosshairs" style="margin-right: 12px; color: var(--accent-secondary); font-size: 0.8em;"></i>Dense 2D Tracking</h2>
+            <p>
+                Track4World enables consistent long-term dense tracking across frames. Click the buttons below to visualize tracking results on challenging sequences involving rapid motion, occlusions, and deformations.
+            </p>
+
+            <div class="tracking-container">
+                <div class="tracking-controls">
+                    <button class="track-btn active" onclick="switchVideo(this)" data-src="assets/2d/dog.mp4" data-desc="Sequence: Dog (Deformable Object)">
+                        <i class="fas fa-dog"></i> Dog
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/2d/cat.mp4" data-desc="Sequence: Cat (Fine-grained Motion)">
+                        <i class="fas fa-cat"></i> Cat
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/2d/drift-turn.mp4" data-desc="Sequence: Drift-Turn (Large Displacement)">
+                        <i class="fas fa-car"></i> Drift-Turn
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/2d/monkey.mp4" data-desc="Sequence: Monkey (Complex Articulation)">
+                        <i class="fas fa-paw"></i> Monkey
+                    </button>
+                    <button class="track-btn" onclick="switchVideo(this)" data-src="assets/2d/snowboard.mp4" data-desc="Sequence: Snowboard (Rapid Scene Change)">
+                        <i class="fas fa-person-snowboarding"></i> Snowboard
+                    </button>
+                </div>
+
+                <div class="tracking-viewport">
+                    <div class="video-loader"><i class="fas fa-circle-notch fa-spin"></i></div>
+                    <video class="tracking-video" autoplay loop muted playsinline></video>
+                    <div class="video-overlay-info">Select a sequence above...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+        MERGED VISER INTERACTIVE SECTION
+        ========================================= -->
+        <section id="interactive-demos" class="glass-card" style="padding: 40px;">
+
+            <!-- Main Header -->
+            <h2 style="margin-bottom: 10px;">Interactive Visualizations</h2>
+            
+            <!-- Global Note -->
+            <div style="margin-bottom: 40px; color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; background: rgba(251, 191, 36, 0.1); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Note: High-fidelity scene data is large. Please allow some time for the visualization to load.</span>
+            </div>
+
+            <!-- =========================================
+            SUBSECTION 1: CAMERA-CENTRIC
+            ========================================= -->
+            <div id="viser-demo">
+                <div class="subsection-header">
+                    <h3 class="subsection-title">
+                        <i class="fas fa-cube" style="color: var(--accent-secondary);"></i> 
+                        Camera-Centric 3D Tracking
+                    </h3>
+                    <div class="live-indicator">
+                        <i class="fas fa-circle"></i> LIVE INSTANCE
+                    </div>
+                </div>
+                <p class="subsection-desc">Explore the reconstructed point clouds and trajectories in the camera coordinate system.</p>
+            
+                <!-- Controls Area -->
+                <div class="viser-controls-row">
+                    <!-- Scene Selection (Scrollable) -->
+                    <div class="viser-control-group" style="flex: 1;">
+                        <span class="viser-label">
+                            <i class="fas fa-film" style="margin-right: 8px;"></i> Scene:
+                        </span>
+                        <div class="viser-scene-group">
+                            <button class="track-btn active" onclick="updateViserScene('parkour')" id="btn-scene-parkour">Parkour</button>
+                            <button class="track-btn" onclick="updateViserScene('breakdance-flare')" id="btn-scene-breakdance-flare">Breakdance</button>
+                            <button class="track-btn" onclick="updateViserScene('snowboard')" id="btn-scene-snowboard">Snowboard</button>
+                            <button class="track-btn" onclick="updateViserScene('drift-turn')" id="btn-scene-drift-turn">Drift Turn</button>
+                            <button class="track-btn" onclick="updateViserScene('flamingo')" id="btn-scene-flamingo">Flamingo</button>
+                            <!-- <button class="track-btn" onclick="updateViserScene('bmx-trees')" id="btn-scene-bmx-trees">BMX Trees</button> -->
+                            <button class="track-btn" onclick="updateViserScene('horsejump-low')" id="btn-scene-horsejump-low">Horsejump</button>
+                            <button class="track-btn" onclick="updateViserScene('koala')" id="btn-scene-koala">Koala</button>
+                            <button class="track-btn" onclick="updateViserScene('longboard')" id="btn-scene-longboard">Longboard</button>
+                            <button class="track-btn" onclick="updateViserScene('skating')" id="btn-scene-skating">Skating</button>
+                            <!-- <button class="track-btn" onclick="updateViserScene('paragliding')" id="btn-scene-paragliding">Paragliding</button> -->
+                            <button class="track-btn" onclick="updateViserScene('soccerball')" id="btn-scene-soccerball">Soccerball</button>
+                            <button class="track-btn" onclick="updateViserScene('swing')" id="btn-scene-swing">Swing</button>
+                            <button class="track-btn" onclick="updateViserScene('train')" id="btn-scene-train">Train</button>
+                            <button class="track-btn" onclick="updateViserScene('pillow')" id="btn-scene-pillow">Pillow</button>
+                            <button class="track-btn" onclick="updateViserScene('rollerblade')" id="btn-scene-rollerblade">Rollerblade</button>
+                        </div>
+                    </div>
+            
+                    <!-- Mode Selection & Reset -->
+                    <div class="viser-control-group" style="min-width: 200px; align-items: flex-end;">
+                        <span class="viser-label"><i class="fas fa-layer-group" style="margin-right: 8px;"></i> Mode:</span>
+                        <div class="viser-mode-group">
+                            <button class="mode-btn" onclick="updateViserMode('pc')" id="btn-mode-pc">Points</button>
+                            <button class="mode-btn" onclick="updateViserMode('line')" id="btn-mode-line">Lines</button>
+                            <button class="mode-btn active" onclick="updateViserMode('both')" id="btn-mode-both">Both</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Viser Container -->
+                <div class="viser-wrapper" id="viser-container">
+                    
+                    <!-- 1. Overlay Video (Click to Pause) -->
+                    <div class="overlay-video-container" id="overlay-video-wrap" onclick="toggleOverlayVideo()">
+                        <video id="viser-overlay-video" class="overlay-video" autoplay loop muted playsinline></video>
+                        
+                        
+                        <div class="video-status-icon">
+                            <i class="fas fa-play"></i>
+                        </div>
+
+                        <div class="overlay-label">Reference (Click to Pause)</div>
+                    </div>
+            
+                    <!-- 2. Viser Iframe -->
+                    <iframe 
+                        id="viser-iframe"
+                        class="viser-frame" 
+                        src="" 
+                        title="Viser Interactive Demo"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+            
+                    <!-- 3. Loading Fallback -->
+                    <div class="viser-fallback">
+                        <i class="fas fa-satellite-dish fa-spin fa-3x" style="margin-bottom: 20px; opacity: 0.7;"></i>
+                        <h3 style="margin: 0; color: var(--text-main);">Loading Scene Data...</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIVIDER -->
+            <div class="demo-divider"></div>
+
+            <!-- =========================================
+            SUBSECTION 2: WORLD-CENTRIC
+            ========================================= -->
+            <div id="viser-world-demo">
+                <div class="subsection-header world-centric">
+                    <h3 class="subsection-title">
+                        <i class="fas fa-globe-americas" style="color: var(--accent-purple);"></i> 
+                        World-Centric 3D Tracking
+                    </h3>
+                    <div class="live-indicator" style="border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(139, 92, 246, 0.1);">
+                        <i class="fas fa-circle"></i> LIVE INSTANCE
+                    </div>
+                </div>
+                <p class="subsection-desc">Visualizing the reconstructed motion in the global world coordinate system.</p>
+            
+                <!-- Controls Area -->
+                <div class="viser-controls-row">
+                    <!-- Scene Selection -->
+                    <!-- Scene Selection -->
+                    <div class="viser-control-group" style="flex: 1;">
+                        <span class="viser-label">
+                            <i class="fas fa-film" style="margin-right: 8px;"></i> SCENE:
+                        </span>
+                        <div class="viser-scene-group1" style="max-width: 100%;">
+        
+                            <button class="track-btn" onclick="updateWorldScene('human5')" id="btn-world-scene-human5">Outdoor Gym</button>
+                            <button class="track-btn" onclick="updateWorldScene('human7')" id="btn-world-scene-human7">Kicking</button>
+                            <button class="track-btn" onclick="updateWorldScene('horsejump-high')" id="btn-world-scene-horsejump-high">Horsejump High</button>
+                            <button class="track-btn" onclick="updateWorldScene('rollerblade')" id="btn-world-scene-rollerblade">Rollerblade</button>
+                            <button class="track-btn" onclick="updateWorldScene('snowboard')" id="btn-world-scene-snowboard">Snowboard</button>
+                            <button class="track-btn" onclick="updateWorldScene('longboard')" id="btn-world-scene-longboard">Longboard</button>
+                            <button class="track-btn" onclick="updateWorldScene('drift-straight')" id="btn-world-scene-drift-straight">Drift Straight</button>
+                            <button class="track-btn" onclick="updateWorldScene('tennis')" id="btn-world-scene-tennis">Tennis</button>
+
+                        </div>
+                    </div>
+                    <div class="viser-control-group" style="min-width: 200px; align-items: flex-end;">
+                        <span class="viser-label"><i class="fas fa-layer-group" style="margin-right: 8px;"></i> Mode:</span>
+                        <div class="viser-mode-group">
+                            <button class="mode-btn" onclick="updateWorldMode('pc')" id="btn-world-mode-pc">Points</button>
+                            <button class="mode-btn" onclick="updateWorldMode('line')" id="btn-world-mode-line">Lines</button>
+                            <button class="mode-btn active" onclick="updateWorldMode('both')" id="btn-world-mode-both">Both</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Viser Container -->
+                <div class="viser-wrapper" id="viser-world-container">
+                    <div class="overlay-video-container" id="overlay-world-video-wrap" onclick="toggleWorldOverlayVideo()">
+                        <video id="viser-world-overlay-video" class="overlay-video" autoplay loop muted playsinline></video>
+                        <div class="video-status-icon"><i class="fas fa-play"></i></div>
+                        <div class="overlay-label">Reference (Click to Pause)</div>
+                    </div>
+                    <iframe id="viser-world-iframe" class="viser-frame" src="" title="Viser World Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <div class="viser-fallback">
+                        <i class="fas fa-globe fa-spin fa-3x" style="margin-bottom: 20px; opacity: 0.7; color: var(--accent-purple);"></i>
+                        <h3 style="margin: 0; color: var(--text-main);">Loading World Data...</h3>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="glass-card">
+            <h2>Methodology</h2>
+            <div style="width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <img src="assets/framework.png" alt="Track4World Framework" style="width: 100%; height: auto; display: block;">
+            </div>
+        
+            <p style="margin-top: 20px; line-height: 1.6;">
+                Given <strong>(a)</strong> the input video frames, Track4World first extracts <strong>(b)</strong> <span class="highlight-term">global scene representations</span> (geometric embeddings, point clouds, and camera poses). 
+                <strong>(c)</strong> A <span class="highlight-term">sparse-to-dense scene flow decoder</span> then predicts 2D-3D joint flows between arbitrary timesteps, which applies a novel <span class="highlight-term">2D-to-3D correlation scheme</span> to improve efficiency and allows 2D-3D joint supervision. 
+                <strong>(d)</strong> The pairwise flows are ultimately fused to establish <span class="highlight-term">holistic world-centric 3D tracking</span>.
+            </p>
+        </section>
+
+        <section class="glass-card">
+            <h2>Performance Metrics</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 25px;">
+                Comprehensive evaluation on <b>Scene & Optical Flow</b>, <b>3D Tracking</b>, and <b>2D Tracking</b>. <span style="color: var(--text-main); font-weight: bold; text-decoration: underline; text-decoration-color: var(--accent-primary);">Underlined</span> indicates best results.
+            </p>
+            
+            <div class="metrics-split-container">
+                
+                <!-- =========================================
+                    PART 1: SCENE & OPTICAL FLOW
+                    ========================================= -->
+                    <div class="table-section">
+                    <div class="table-title">1. Scene & Optical Flow Estimation</div>
+                    
+                    <h4 style="margin: 10px 0 5px; color: var(--text-muted); font-size: 0.9rem; padding-left: 5px;">In-Domain (Kubric-3D)</h4>
+                    <div class="table-wrapper">
+                        <table class="complex-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Method</th>
+                                    <th colspan="8" class="header-group-2">Kubric-3D val (short)</th>
+                                    <th colspan="8" class="header-group-2">Kubric-3D val (long)</th>
+                                </tr>
+                                <tr class="header-metrics">
+                                    <td>Abs Rel ↓</td> <td>δ<1.25 ↑</td> <td>EPE3D ↓</td> <td>AccS ↑</td> 
+                                    <td>AccR ↑</td> <td>EPE2D ↓</td> <td>AccS<sub>2D</sub> ↑</td> <td>AccR<sub>2D</sub> ↑</td>
+                                    <td>Abs Rel ↓</td> <td>δ<1.25 ↑</td> <td>EPE3D ↓</td> <td>AccS ↑</td> 
+                                    <td>AccR ↑</td> <td>EPE2D ↓</td> <td>AccS<sub>2D</sub> ↑</td> <td>AccR<sub>2D</sub> ↑</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="sticky-col">RAFT</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>6.7974</td> <td>0.7442</td> <td>0.9018</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>51.9034</td> <td>0.5183</td> <td>0.7042</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">GMFlowNet</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>7.0390</td> <td>0.7619</td> <td>0.9103</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>51.9049</td> <td>0.5309</td> <td>0.7201</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">SEA-RAFT</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>9.5794</td> <td>0.7720</td> <td>0.8947</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>58.7148</td> <td>0.5596</td> <td>0.6825</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">RAFT-3D</td>
+                                    <td>0.0649</td> <td>0.9344</td> <td>0.6170</td> <td>0.0015</td> <td>0.0078</td> 
+                                    <td>40.4480</td> <td>0.0002</td> <td>0.0015</td>
+                                    <td>0.1245</td> <td>0.8422</td> <td>1.5652</td> <td>0.0001</td> <td>0.0010</td> 
+                                    <td>83.6966</td> <td>0.0004</td> <td>0.0040</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">OpticalExpansion</td>
+                                    <td>0.2170</td> <td>0.6266</td> <td>0.2093</td> <td>0.2890</td> <td>0.4760</td> 
+                                    <td>19.6471</td> <td>0.1183</td> <td>0.3316</td>
+                                    <td>0.2177</td> <td>0.6316</td> <td>0.7037</td> <td>0.1062</td> <td>0.1903</td> 
+                                    <td>68.6562</td> <td>0.0255</td> <td>0.0874</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">POMATO</td>
+                                    <td>0.1525</td> <td>0.8329</td> <td>0.9672</td> <td>0.0566</td> <td>0.1696</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.1761</td> <td>0.7760</td> <td>1.6925</td> <td>0.0148</td> <td>0.0564</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">ZeroMSF</td>
+                                    <td>0.0860</td> <td>0.9196</td> <td>0.3528</td> <td>0.1867</td> <td>0.3413</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.1208</td> <td>0.8609</td> <td>1.2182</td> <td>0.0475</td> <td>0.0895</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">Any4D</td>
+                                    <td>0.0585</td> <td>0.9547</td> <td>0.3908</td> <td>0.1610</td> <td>0.2893</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.1017</td> <td>0.8770</td> <td>1.2442</td> <td>0.0429</td> <td>0.0855</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">V-DPM</td>
+                                    <td>0.0716</td> <td>0.9010</td> <td>0.4087</td> <td>0.1442</td> <td>0.2491</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.1155</td> <td>0.8205</td> <td>1.2620</td> <td>0.0407</td> <td>0.0803</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr class="row-ours">
+                                    <td class="sticky-col">Track4World (Ours)</td>
+                                    <td class="best-val">0.0344</td> <td class="best-val">0.9719</td> <td class="best-val">0.1537</td> <td class="best-val">0.5494</td> <td class="best-val">0.7460</td> 
+                                    <td class="best-val">1.8685</td> <td class="best-val">0.8086</td> <td class="best-val">0.9309</td>
+                                    <td class="best-val">0.0472</td> <td class="best-val">0.9371</td> <td class="best-val">0.4808</td> <td class="best-val">0.3247</td> <td class="best-val">0.5491</td> 
+                                    <td class="best-val">15.0906</td> <td class="best-val">0.6134</td> <td class="best-val">0.7711</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                
+                    <h4 style="margin: 20px 0 5px; color: var(--text-muted); font-size: 0.9rem; padding-left: 5px;">Out-of-Domain (KITTI & BlinkVision)</h4>
+                    <div class="table-wrapper">
+                        <table class="complex-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Method</th>
+                                    <th colspan="8" class="header-group-2">KITTI</th>
+                                    <th colspan="8" class="header-group-2">BlinkVision</th>
+                                </tr>
+                                <tr class="header-metrics">
+                                    <td>Abs Rel ↓</td> <td>δ<1.25 ↑</td> <td>EPE3D ↓</td> <td>AccS ↑</td> 
+                                    <td>AccR ↑</td> <td>EPE2D ↓</td> <td>AccS<sub>2D</sub> ↑</td> <td>AccR<sub>2D</sub> ↑</td>
+                                    <td>Abs Rel ↓</td> <td>δ<1.25 ↑</td> <td>EPE3D ↓</td> <td>AccS ↑</td> 
+                                    <td>AccR ↑</td> <td>EPE2D ↓</td> <td>AccS<sub>2D</sub> ↑</td> <td>AccR<sub>2D</sub> ↑</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="sticky-col">RAFT</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>5.4150</td> <td>0.6271</td> <td>0.8068</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>14.1255</td> <td>0.5037</td> <td>0.6953</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">GMFlowNet</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>4.6977</td> <td>0.6432</td> <td>0.8241</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>12.0176</td> <td>0.5281</td> <td>0.7170</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">SEA-RAFT</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>4.8863</td> <td>0.6654</td> <td>0.8297</td>
+                                    <td>/</td> <td>/</td> <td>/</td> <td>/</td> <td>/</td> 
+                                    <td>20.9160</td> <td class="best-val">0.5697</td> <td>0.7186</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">RAFT-3D</td>
+                                    <td>0.1619</td> <td>0.8413</td> <td>0.3837</td> <td>0.0118</td> <td>0.0678</td> 
+                                    <td>54.0938</td> <td>0.0001</td> <td>0.0007</td>
+                                    <td>0.1426</td> <td>0.8455</td> <td>0.6690</td> <td>0.0454</td> <td>0.1280</td> 
+                                    <td>85.4975</td> <td>0.0018</td> <td>0.0121</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">OpticalExpansion</td>
+                                    <td>0.2764</td> <td>0.4302</td> <td>0.2419</td> <td>0.1553</td> <td>0.2612</td> 
+                                    <td>8.8808</td> <td>0.5446</td> <td>0.7326</td>
+                                    <td>0.3372</td> <td>0.4099</td> <td>0.4406</td> <td>0.2091</td> <td>0.3116</td> 
+                                    <td>20.2384</td> <td>0.4122</td> <td>0.6139</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">POMATO</td>
+                                    <td>0.2752</td> <td>0.4359</td> <td>0.2602</td> <td>0.1127</td> <td>0.2156</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.2089</td> <td>0.6569</td> <td>0.4038</td> <td>0.1522</td> <td>0.2870</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">ZeroMSF</td>
+                                    <td>0.2064</td> <td>0.5913</td> <td>0.1823</td> <td>0.1695</td> <td>0.3481</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.1934</td> <td>0.6620</td> <td>0.3937</td> <td>0.1913</td> <td>0.2991</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">Any4D</td>
+                                    <td>0.2398</td> <td>0.4974</td> <td>0.1856</td> <td>0.1429</td> <td>0.2931</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.2218</td> <td>0.6125</td> <td>0.9238</td> <td>0.1242</td> <td>0.1818</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">V-DPM</td>
+                                    <td>0.1469</td> <td>0.7981</td> <td>0.4462</td> <td>0.1180</td> <td>0.1608</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                    <td>0.2117</td> <td>0.6449</td> <td>1.1476</td> <td>0.1079</td> <td>0.1547</td> 
+                                    <td>/</td> <td>/</td> <td>/</td>
+                                </tr>
+                                <tr class="row-ours">
+                                    <td class="sticky-col">Track4World (Ours)</td>
+                                    <td class="best-val">0.0707</td> <td class="best-val">0.9570</td> <td class="best-val">0.0742</td> <td class="best-val">0.6929</td> <td class="best-val">0.8238</td> 
+                                    <td class="best-val">2.5722</td> <td class="best-val">0.6849</td> <td class="best-val">0.8769</td>
+                                    <td class="best-val">0.0371</td> <td class="best-val">0.9768</td> <td class="best-val">0.1135</td> <td class="best-val">0.5091</td> <td class="best-val">0.7144</td> 
+                                    <td class="best-val">7.5632</td> <td>0.5131</td> <td class="best-val">0.7424</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="table-section">
+                    <div class="table-title">2. 3D Tracking Estimation (APD Metric)</div>
+                    <div class="table-wrapper">
+                        <table class="complex-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Method</th>
+                                    <th colspan="2" class="header-group-2">PointOdyssey</th>
+                                    <th colspan="2" class="header-group-2">ADT</th>
+                                    <th colspan="2" class="header-group-2">PStudio</th>
+                                    <th colspan="2" class="header-group-2">DriveTrack</th>
+                                    <th colspan="2" class="header-group-2">Avg.</th>
+                                </tr>
+                                <tr class="header-metrics">
+                                    <td>L-16</td> <td>L-50</td>
+                                    <td>L-16</td> <td>L-50</td>
+                                    <td>L-16</td> <td>L-50</td>
+                                    <td>L-16</td> <td>L-50</td>
+                                    <td>L-16</td> <td>L-50</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="separator-row">
+                                    <td colspan="11" style="text-align: left; font-style: italic; background-color: #1e2a38; font-weight: 600; color: #a5b3ce;">
+                                        Camera coordinate 3D tracking
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">SpatialTracker*</td>
+                                    <td>0.3116</td> <td>0.2977</td>
+                                    <td>0.4962</td> <td>0.4692</td>
+                                    <td>0.5390</td> <td>0.4991</td>
+                                    <td>0.2529</td> <td>0.2502</td>
+                                    <td>0.3999</td> <td>0.3791</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">DELTA*</td>
+                                    <td>0.3529</td> <td>0.3412</td>
+                                    <td>0.5116</td> <td>0.4952</td>
+                                    <td>0.5922</td> <td class="best-val">0.5533</td>
+                                    <td>0.2704</td> <td>0.2701</td>
+                                    <td>0.4317</td> <td>0.4150</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">STV2†</td>
+                                    <td>0.1864</td> <td>0.1785</td>
+                                    <td>0.2400</td> <td>0.2330</td>
+                                    <td>0.3784</td> <td>0.3690</td>
+                                    <td>0.1711</td> <td>0.1725</td>
+                                    <td>0.2400</td> <td>0.2383</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">MASt3R</td>
+                                    <td>0.3546</td> <td>0.3253</td>
+                                    <td>0.3368</td> <td>0.3029</td>
+                                    <td>0.3293</td> <td>0.2956</td>
+                                    <td>0.2767</td> <td>0.2559</td>
+                                    <td>0.3244</td> <td>0.2949</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">MonST3R</td>
+                                    <td>0.3912</td> <td>0.3860</td>
+                                    <td>0.3694</td> <td>0.3429</td>
+                                    <td>0.3511</td> <td>0.3381</td>
+                                    <td>0.3056</td> <td>0.2787</td>
+                                    <td>0.3543</td> <td>0.3364</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">POMATO</td>
+                                    <td>0.4816</td> <td>0.4623</td>
+                                    <td>0.5338</td> <td>0.5299</td>
+                                    <td>0.5163</td> <td>0.4726</td>
+                                    <td>0.4237</td> <td>0.4329</td>
+                                    <td>0.4888</td> <td>0.4744</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">ZeroMSF</td>
+                                    <td>0.4214</td> <td>0.3887</td>
+                                    <td>0.5382</td> <td>0.4635</td>
+                                    <td>0.5083</td> <td>0.4524</td>
+                                    <td>0.4448</td> <td>0.4513</td>
+                                    <td>0.4782</td> <td>0.4390</td>
+                                </tr>
+                                <tr class="row-ours">
+                                    <td class="sticky-col">Track4World (Ours)</td>
+                                    <td class="best-val">0.5397</td> <td class="best-val">0.5268</td>
+                                    <td class="best-val">0.6501</td> <td class="best-val">0.6091</td>
+                                    <td class="best-val">0.5948</td> <td>0.5423</td>
+                                    <td class="best-val">0.5003</td> <td class="best-val">0.5092</td>
+                                    <td class="best-val">0.5712</td> <td class="best-val">0.5469</td>
+                                </tr>
+                
+                                <tr class="separator-row">
+                                    <td colspan="11" style="text-align: left; font-style: italic; background-color: #1e2a38; font-weight: 600; color: #a5b3ce;">
+                                        World coordinate 3D tracking
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">STV2†</td>
+                                    <td>0.1925</td> <td>0.1763</td>
+                                    <td>0.2456</td> <td>0.2163</td>
+                                    <td>0.3790</td> <td>0.3689</td>
+                                    <td>0.1711</td> <td>0.1725</td>
+                                    <td>0.2470</td> <td>0.2335</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">POMATO‡</td>
+                                    <td>0.4425</td> <td>0.3905</td>
+                                    <td>0.3611</td> <td>0.3548</td>
+                                    <td>0.5166</td> <td>0.4713</td>
+                                    <td>0.4227</td> <td>0.4210</td>
+                                    <td>0.4357</td> <td>0.4094</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">ZeroMSF‡</td>
+                                    <td>0.4053</td> <td>0.3505</td>
+                                    <td>0.4530</td> <td>0.3563</td>
+                                    <td>0.4828</td> <td>0.4386</td>
+                                    <td>0.4474</td> <td>0.4382</td>
+                                    <td>0.4471</td> <td>0.3959</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">Any4D</td>
+                                    <td>0.4769</td> <td>0.4174</td>
+                                    <td>0.4460</td> <td>0.3717</td>
+                                    <td>0.5707</td> <td>0.5066</td>
+                                    <td class="best-val">0.5235</td> <td>0.5079</td>
+                                    <td>0.5043</td> <td>0.4509</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">V-DPM</td>
+                                    <td>0.4848</td> <td>0.4233</td>
+                                    <td>0.4783</td> <td>0.3759</td>
+                                    <td class="best-val">0.6084</td> <td class="best-val">0.5795</td>
+                                    <td>0.4854</td> <td>0.4817</td>
+                                    <td>0.5142</td> <td>0.4668</td>
+                                </tr>
+                                <tr class="row-ours">
+                                    <td class="sticky-col">Track4World (Ours)</td>
+                                    <td class="best-val">0.5345</td> <td class="best-val">0.5162</td>
+                                    <td class="best-val">0.6250</td> <td class="best-val">0.5622</td>
+                                    <td class="best-val">0.5946</td> <td class="best-val">0.5422</td>
+                                    <td class="best-val">0.5003</td> <td class="best-val">0.5087</td>
+                                    <td class="best-val">0.5636</td> <td class="best-val">0.5323</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">
+                        * Ground-truth intrinsics used. † No bundle adjustment. ‡ Using camera
+                        poses estimated by VGGT.
+                    </p>
+                </div>
+
+                <!-- =========================================
+                    PART 3: 2D TRACKING ESTIMATION
+                    ========================================= -->
+                <div class="table-section">
+                    <div class="table-title">3. 2D Tracking Estimation</div>
+                    <div class="table-wrapper">
+                        <table class="complex-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Method</th>
+                                    <th colspan="3" class="header-group-2">Kinetics</th>
+                                    <th colspan="3" class="header-group-2">RoboTAP</th>
+                                    <th colspan="3" class="header-group-2">RGB-S</th>
+                                </tr>
+                                <tr class="header-metrics">
+                                    <td>AJ ↑</td> <td>δ<sub>vis</sub> ↑</td> <td>OA ↑</td>
+                                    <td>AJ ↑</td> <td>δ<sub>vis</sub> ↑</td> <td>OA ↑</td>
+                                    <td>AJ ↑</td> <td>δ<sub>vis</sub> ↑</td> <td>OA ↑</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="sticky-col">PIPs++</td>
+                                    <td>/</td> <td>63.5</td> <td>/</td>
+                                    <td>/</td> <td>63.0</td> <td>/</td>
+                                    <td>/</td> <td>58.5</td> <td>/</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">TAPIR</td>
+                                    <td>49.6</td> <td>64.2</td> <td>85.0</td>
+                                    <td>59.6</td> <td>73.4</td> <td>87.0</td>
+                                    <td>55.5</td> <td>69.7</td> <td>88.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">CoTracker</td>
+                                    <td>49.6</td> <td>64.3</td> <td>83.3</td>
+                                    <td>58.6</td> <td>70.6</td> <td>87.0</td>
+                                    <td>67.4</td> <td>78.9</td> <td>85.2</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">TAPTR</td>
+                                    <td>49.0</td> <td>64.4</td> <td>85.2</td>
+                                    <td>60.1</td> <td>75.3</td> <td>86.9</td>
+                                    <td>60.8</td> <td>76.2</td> <td>87.0</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">LocoTrack</td>
+                                    <td>52.9</td> <td>66.8</td> <td>85.3</td>
+                                    <td>62.3</td> <td>76.2</td> <td>87.1</td>
+                                    <td>69.7</td> <td>83.2</td> <td>89.5</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">BootsTAPIR</td>
+                                    <td>54.6</td> <td>68.4</td> <td>86.5</td>
+                                    <td>64.9</td> <td>80.1</td> <td>86.3</td>
+                                    <td>70.8</td> <td>83.0</td> <td>89.9</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">CoTracker3</td>
+                                    <td>55.8</td> <td>68.5</td> <td>88.3</td>
+                                    <td>66.4</td> <td>78.8</td> <td>90.8</td>
+                                    <td>71.7</td> <td>83.6</td> <td>91.1</td>
+                                </tr>
+                                <tr class="row-ours">
+                                    <td class="sticky-col">Track4World (Ours)</td>
+                                    <td class="best-val">59.1</td> <td class="best-val">71.3</td> <td class="best-val">90.6</td>
+                                    <td class="best-val">70.9</td> <td class="best-val">81.8</td> <td class="best-val">93.3</td>
+                                    <td class="best-val">78.2</td> <td class="best-val">88.5</td> <td class="best-val">92.3</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="table-section">
+                    <div class="table-title">4. Camera pose estimation</div>
+                    <div class="table-wrapper">
+                        <table class="complex-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Method</th>
+                                    <th colspan="3" class="header-group-2">Sintel</th>
+                                    <th colspan="3" class="header-group-2">Bonn</th>
+                                </tr>
+                                <tr class="header-metrics">
+                                    <td>ATE ↓</td> <td>RTE ↓</td> <td>RRE ↓</td>
+                                    <td>ATE ↓</td> <td>RTE ↓</td> <td>RRE ↓</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="sticky-col">Align3R</td>
+                                    <td>0.128</td> <td class="best-val">0.042</td> <td>0.432</td>
+                                    <td>0.023</td> <td class="best-val">0.007</td> <td>0.620</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">CUT3R</td>
+                                    <td>0.217</td> <td>0.070</td> <td>0.636</td>
+                                    <td>0.035</td> <td>0.014</td> <td>1.212</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">VGGT</td>
+                                    <td>0.167</td> <td>0.062</td> <td>0.490</td>
+                                    <td>0.051</td> <td>0.011</td> <td>1.038</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">MapAnything</td>
+                                    <td>0.227</td> <td>0.111</td> <td>2.047</td>
+                                    <td>0.026</td> <td>0.014</td> <td>0.668</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">Pi3</td>
+                                    <td class="best-val">0.088</td> <td class="second-val">0.043</td> <td class="best-val">0.299</td>
+                                    <td>0.012</td> <td>0.011</td> <td class="second-val">0.612</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">DA3</td>
+                                    <td>0.124</td> <td>0.061</td> <td>0.331</td>
+                                    <td class="second-val">0.010</td> <td>0.011</td> <td>0.638</td>
+                                </tr>
+                
+                                <tr style="border-top: 1px solid #e0e0e0;">
+                                    <td class="sticky-col">POMATO</td>
+                                    <td>0.209</td> <td>0.064</td> <td>0.694</td>
+                                    <td>0.041</td> <td>0.017</td> <td>0.832</td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col">STV2</td>
+                                    <td>0.133</td> <td>0.057</td> <td>0.641</td>
+                                    <td>0.019</td> <td>0.015</td> <td>0.701</td>
+                                </tr>
+                                
+                                <tr class="row-ours">
+                                    <td class="sticky-col"><strong>Track4World (Ours)</strong></td>
+                                    <td class="second-val">0.119</td> <td>0.054</td> <td class="second-val">0.309</td>
+                                    <td class="best-val">0.009</td> <td class="second-val">0.009</td> <td class="best-val">0.604</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Citation</h2>
+            <div class="bibtex-container">
+                <div class="bibtex-header">BibTeX :: tex</div>
+                <pre class="bibtex">
+</pre>
+            </div>
+        </section>
+
+    </div>
+
+    <footer style="text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 0.9rem; background: linear-gradient(to top, #000, transparent);">
+        <p style="opacity: 0.7;">&copy; 2025 Project Track4World.</p>
+    </footer>
+
+    <script>
+        MathJax = {
+          tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <script>
+        
+        window.addEventListener('DOMContentLoaded', () => {
+             const containers = document.querySelectorAll('.tracking-container');
+             containers.forEach(container => {
+                 const activeBtn = container.querySelector('.track-btn.active');
+                 if (activeBtn) {
+                     switchVideo(activeBtn);
+                 }
+             });
+        });
+
+        function switchVideo(btnElement) {
+            const container = btnElement.closest('.tracking-container');
+            const videoPlayer = container.querySelector('.tracking-video');
+            const overlayText = container.querySelector('.video-overlay-info');
+            const loaderIcon = container.querySelector('.video-loader');
+            const buttons = container.querySelectorAll('.track-btn');
+
+            const src = btnElement.getAttribute('data-src');
+            const desc = btnElement.getAttribute('data-desc');
+
+            if (!src) return;
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const showVideo = () => {
+                videoPlayer.classList.add('loaded');
+                if(loaderIcon) loaderIcon.classList.add('hidden');
+            };
+            
+            const hideVideo = () => {
+                videoPlayer.classList.remove('loaded');
+                if(loaderIcon) loaderIcon.classList.remove('hidden');
+            };
+
+            videoPlayer.oncanplay = showVideo;
+            videoPlayer.onwaiting = hideVideo;
+
+            hideVideo();
+            
+            setTimeout(() => {
+                videoPlayer.src = src;
+                if(overlayText) overlayText.textContent = desc || "";
+                
+                videoPlayer.load();
+                const playPromise = videoPlayer.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay prevented:", error);
+                    });
+                }
+            }, 200);
+        }
+
+        // ==========================================
+        // VISER LOGIC (CAMERA-CENTRIC)
+        // ==========================================
+
+        const VISER_CLIENT_URL = "https://jiah-cloud.github.io/Track4World.github.io/viser-client/?playbackPath=";
+        // 默认相机参数
+        const DEFAULT_CAM = "&initialCameraPosition=-0.003,-0.23,-0.93&initialCameraLookAt=0,0,0&initialCameraUp=0,0,1&initialCameraWxyz=1,-0.12,0,0&fov=1.31";
+
+        // 场景数据配置
+        const viserScenes = {
+            'breakdance-flare': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/breakdance-flare/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/breakdance-flare/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/breakdance-flare/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/breakdance-flare/pc_line.viser' }
+            },
+            'drift-turn': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/drift-turn/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/drift-turn/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/drift-turn/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/drift-turn/pc_line.viser' }
+            },
+            'flamingo': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/flamingo/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/flamingo/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/flamingo/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/flamingo/pc_line.viser' }
+            },
+            'horsejump-low': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/horsejump-low/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/horsejump-low/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/horsejump-low/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/horsejump-low/pc_line.viser' }
+            },
+            'koala': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/koala/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/koala/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/koala/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/koala/pc_line.viser' }
+            },
+            'longboard': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/longboard/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/longboard/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/longboard/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/longboard/pc_line.viser' }
+            },
+            'parkour': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/parkour/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/parkour/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/parkour/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/parkour/pc_line.viser' }
+            },
+            'pillow': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/pillow/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/pillow/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/pillow/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/pillow/pc_line.viser' }
+            },
+            'rollerblade': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/rollerblade/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/rollerblade/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/rollerblade/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/rollerblade/pc_line.viser' }
+            },
+            'skating': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/skating/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/skating/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/skating/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/skating/pc_line.viser' }
+            },
+            'snowboard': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/snowboard/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/snowboard/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/snowboard/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/snowboard/pc_line.viser' }
+            },
+            'soccerball': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/soccerball/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/soccerball/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/soccerball/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/soccerball/pc_line.viser' }
+            },
+            'swing': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/swing/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/swing/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/swing/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/swing/pc_line.viser' }
+            },
+            'train': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/train/rgb.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/train/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/train/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordings/train/pc_line.viser' }
+            }
+        };
+
+        let currentViserScene = 'parkour';
+        let currentViserMode = 'both';
+
+        // 更新场景
+        function updateViserScene(sceneKey) {
+            if (!viserScenes[sceneKey]) return;
+            currentViserScene = sceneKey;
+            
+            // UI 更新
+            document.querySelectorAll('.viser-scene-group .track-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-scene-${sceneKey}`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            refreshViserState();
+        }
+
+        // 更新模式 (Points/Lines/Both)
+        function updateViserMode(modeKey) {
+            currentViserMode = modeKey;
+            
+            // UI 更新
+            document.querySelectorAll('.viser-mode-group .mode-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-mode-${modeKey}`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            refreshViserState();
+        }
+
+        // 刷新 Iframe 和 视频
+        function refreshViserState() {
+            const sceneData = viserScenes[currentViserScene];
+            const relativeFilePath = sceneData.files[currentViserMode];
+            
+            const fullViserUrl = `${VISER_CLIENT_URL}${relativeFilePath}${DEFAULT_CAM}`;
+            
+            const iframe = document.getElementById('viser-iframe');
+            const overlayVideo = document.getElementById('viser-overlay-video');
+            const overlayWrap = document.getElementById('overlay-video-wrap');
+
+            // 更新 Iframe
+            if (iframe.src !== fullViserUrl) {
+                iframe.src = fullViserUrl;
+            }
+
+            // 更新左上角视频
+            if (!overlayVideo.src.includes(sceneData.video)) {
+                overlayWrap.classList.remove('visible');
+                overlayWrap.classList.remove('paused'); // 切换视频时重置暂停状态
+                
+                setTimeout(() => {
+                    overlayVideo.src = sceneData.video;
+                    overlayVideo.load();
+                    
+                    const playPromise = overlayVideo.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => console.log("Autoplay blocked"));
+                    }
+                    
+                    overlayVideo.oncanplay = () => {
+                        overlayWrap.classList.add('visible');
+                    };
+                }, 200);
+            }
+        }
+
+        // 视频点击暂停/播放逻辑
+        function toggleOverlayVideo() {
+            const video = document.getElementById('viser-overlay-video');
+            const container = document.getElementById('overlay-video-wrap');
+
+            if (video.paused) {
+                video.play();
+                container.classList.remove('paused');
+            } else {
+                video.pause();
+                container.classList.add('paused');
+            }
+        }
+
+        // ==========================================
+        // WORLD-CENTRIC VISER LOGIC
+        // ==========================================
+
+        // 默认相机参数
+        const WORLD_CAM = "&initialCameraPosition=28.22,2.9,110.62&initialCameraLookAt=-6.68,-2.95,1.66&initialCameraUp=0.31,0.13,0.94&initialCameraWxyz=0.03,0.99,-0.02,-0.15&fov=1.31";
+        // 针对大场景/车辆场景的相机参数
+        const WORLD_CAM3 = "&initialCameraPosition=52.13,34.45,1.18&initialCameraLookAt=-30.19,-28.77,-2.28&initialCameraUp=-0.87,0.12,0.48&initialCameraWxyz=0.01,-0.56,-0.45,0.7&fov=1.31";
+        const WORLD_CAM2 = "&initialCameraPosition=-0.17,-0.05,0.1&initialCameraLookAt=-0.68,0.01,-1.58&initialCameraUp=0.31,0.13,0.94&initialCameraWxyz=-0.01,0.99,-0.06,-0.15&fov=1.31";
+        
+        const WORLD_CAM4 = "&initialCameraPosition=0.23,0.16,-1.75&initialCameraLookAt=-0.41,-0.16,-4.13&initialCameraUp=0.26,0.14,0.96&initialCameraWxyz=0.07,0.99,-0.06,-0.13&fov=1.31";
+        const WORLD_CAM5 = "&initialCameraPosition=22.58,11.25,-17.84&initialCameraLookAt=16.8,10.29,-36.47&initialCameraUp=0.31,0.13,0.94&initialCameraWxyz=0.03,0.99,-0.07,-0.15&fov=1.31";
+
+
+        const worldScenes = {
+            // --- 经典场景 ---
+
+            'human5': { 
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human5/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human5/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human5/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human5/pc_line.viser' }
+            },
+            'human7': { 
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human7/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human7/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human7/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/human7/pc_line.viser' }
+            },
+            'rollerblade': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/rollerblade/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/rollerblade/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/rollerblade/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/rollerblade/pc_line.viser' }
+            },
+            'snowboard': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/snowboard/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/snowboard/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/snowboard/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/snowboard/pc_line.viser' }
+            },
+            'car-roundabout': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-roundabout/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-roundabout/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-roundabout/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-roundabout/pc_line.viser' }
+            },
+            'drift-straight': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/drift-straight/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/drift-straight/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/drift-straight/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/drift-straight/pc_line.viser' }
+            },
+            'car-shadow': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-shadow/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-shadow/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-shadow/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv3/car-shadow/pc_line.viser' }
+            },
+            'horsejump-high': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/horsejump-high/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/horsejump-high/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/horsejump-high/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/horsejump-high/pc_line.viser' }
+            },
+            'longboard': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/longboard/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/longboard/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/longboard/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/longboard/pc_line.viser' }
+            },
+            'tennis': {
+                video: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/tennis/rgb_web.mp4',
+                files: { pc: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/tennis/pc.viser', line: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/tennis/line.viser', both: 'https://huggingface.co/datasets/cyun9286/Holi4d_demo/resolve/main/recordingsv4/tennis/pc_line.viser' }
+            },
+            
+        };
+
+        let currentWorldScene = 'human5';
+        let currentWorldMode = 'both'; 
+
+        // 更新 World Scene
+        function updateWorldScene(sceneKey) {
+            if (!worldScenes[sceneKey]) return;
+            currentWorldScene = sceneKey;
+            
+            // UI 更新
+            document.querySelectorAll('.viser-scene-group1 .track-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-world-scene-${sceneKey}`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            refreshWorldState();
+        }
+
+        // 更新 World Mode (Points/Lines/Both)
+        function updateWorldMode(modeKey) {
+            currentWorldMode = modeKey;
+            
+            // UI 更新
+            document.querySelectorAll('#viser-world-demo .viser-mode-group .mode-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-world-mode-${modeKey}`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            refreshWorldState();
+        }
+
+        // 刷新 World Iframe 和 视频
+        function refreshWorldState() {
+            const sceneData = worldScenes[currentWorldScene];
+            
+            // 定义哪些场景使用特殊的相机视角 (通常是车辆或大范围场景)
+            const isSpecialScene = [
+                'car-roundabout', 'car-shadow', 'horsejump-high', 'human7',
+                'rollerblade'
+            ].includes(currentWorldScene);
+
+            const isSpecialScene1 = [
+                'rollerblade'
+            ].includes(currentWorldScene);
+            
+            const isSpecialScene2 = [
+                'juggle', 'human5',
+            ].includes(currentWorldScene);
+            const isSpecialScene3 = [
+                'tennis',
+            ].includes(currentWorldScene);
+            // 获取当前模式对应的文件路径
+            const relativeFilePath = sceneData.files[currentWorldMode];
+
+            let fullViserUrl = `${VISER_CLIENT_URL}${relativeFilePath}${isSpecialScene ? WORLD_CAM2 : WORLD_CAM}`;
+
+            if (isSpecialScene1) {
+                fullViserUrl = `${VISER_CLIENT_URL}${relativeFilePath}${WORLD_CAM3}`;
+            }
+            if (isSpecialScene2) {
+                fullViserUrl = `${VISER_CLIENT_URL}${relativeFilePath}${WORLD_CAM4}`;
+            }
+            if (isSpecialScene3) {
+                fullViserUrl = `${VISER_CLIENT_URL}${relativeFilePath}${WORLD_CAM5}`;
+            }
+            const iframe = document.getElementById('viser-world-iframe');
+            const overlayVideo = document.getElementById('viser-world-overlay-video');
+            const overlayWrap = document.getElementById('overlay-world-video-wrap');
+
+            // 更新 Iframe
+            if (iframe.src !== fullViserUrl) {
+                iframe.src = fullViserUrl;
+            }
+
+            // 更新左上角视频
+            if (!overlayVideo.src.includes(sceneData.video)) {
+                overlayWrap.classList.remove('visible');
+                overlayWrap.classList.remove('paused');
+                
+                setTimeout(() => {
+                    overlayVideo.src = sceneData.video;
+                    overlayVideo.load();
+                    
+                    const playPromise = overlayVideo.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => console.log("Autoplay blocked"));
+                    }
+                    
+                    overlayVideo.oncanplay = () => {
+                        overlayWrap.classList.add('visible');
+                    };
+                }, 200);
+            }
+        }
+
+        // World Video 点击暂停/播放
+        function toggleWorldOverlayVideo() {
+            const video = document.getElementById('viser-world-overlay-video');
+            const container = document.getElementById('overlay-world-video-wrap');
+
+            if (video.paused) {
+                video.play();
+                container.classList.remove('paused');
+            } else {
+                video.pause();
+                container.classList.add('paused');
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化 Camera-Centric
+            updateViserScene('parkour');
+            
+            // 初始化 World-Centric
+            updateWorldScene('human5');
+        });
+    </script>
+</body>
+</html>
